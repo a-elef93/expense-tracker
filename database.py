@@ -6,7 +6,7 @@ class Database:
         self.path = path
 
     def initialize(self):
-        connection = sqlite3.connect(self.path)
+        connection = self.connect()
         try:
             connection.execute("""
                 CREATE TABLE IF NOT EXISTS transactions (
@@ -21,14 +21,5 @@ class Database:
         finally:
             connection.close()
 
-
-def add_transaction(connection, kind, amount_cents, category, entry_date):
-    cursor = connection.execute(
-        """
-        INSERT INTO transactions (kind, amount_cents, category, entry_date)
-        VALUES (?, ?, ?, ?)
-        """,
-        (kind, amount_cents, category, entry_date),
-    )
-    connection.commit()
-    return cursor.lastrowid
+    def connect(self):
+        return sqlite3.connect(self.path)
