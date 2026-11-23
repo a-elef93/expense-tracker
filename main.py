@@ -6,6 +6,13 @@ from transaction import Transaction
 from transaction_repository import TransactionRepository
 
 
+def format_euros(amount_cents):
+    euros, cents = divmod(abs(amount_cents), 100)
+    sign = "-" if amount_cents < 0 else ""
+    return f"{sign}€{euros}.{cents:02d}"
+
+
+
 def main():
     database = Database(Path(__file__).with_name("expenses.sqlite3"))
     database.initialize()
@@ -45,6 +52,24 @@ def main():
             euros, cents = divmod(amount_cents, 100)
             print(f"#{transaction_id} | {entry_date} | {kind} | €{euros}.{cents:02d} | {category}")
 
+    elif choice == "3":
+        month = input("Month (YYYY-MM): ").strip()
+
+        try:
+            first_day = date.fromisoformat(f"{month}-01")
+            if first_day.isoformat()[:7] != month:
+                raise ValueError
+        except ValueError:
+            print("Enter a valid month, e.g. 2026-11.")
+            return
+
+        totals = repository.monthly_totals(month)
+        income = totals["income"]
+        expenses = totals["expense"]
+
+        print(f"Income:   {format_euros(income)}")
+        print(f"Expenses: {format_euros(expenses)}")
+        print(f"Balance:  {format_euros(income - expenses)}")
     else:
         print("Choose 1 or 2.")
 

@@ -35,3 +35,23 @@ class TransactionRepository:
             return cursor.fetchall()
         finally:
             connection.close()
+
+        def monthly_totals(self, month):
+            connection = self.database.connect()
+            try:
+                rows = connection.execute(
+                    """
+                    SELECT kind, amount_cents
+                    FROM transactions
+                    WHERE substr(entry_date, 1, 7) = ?
+                    """,
+                    (month,),
+                ).fetchall()
+            finally:
+                connection.close()
+
+            totals = {"income": 0, "expense": 0}
+            for kind, amount_cents in rows:
+                totals[kind] += amount_cents
+
+            return totals
