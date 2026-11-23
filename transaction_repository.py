@@ -22,3 +22,16 @@ class TransactionRepository:
             return cursor.lastrowid
         finally:
             connection.close()
+
+    def list_transactions(self):
+        connection = self.database.connect()
+
+        try:
+            cursor = connection.execute("""
+                SELECT id, kind, amount_cents, category, entry_date
+                FROM transactions
+                ORDER BY id DESC
+            """)
+            return cursor.fetchall()
+        finally:
+            connection.close()
