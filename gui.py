@@ -15,6 +15,7 @@ from decimal import Decimal
 class ExpenseTrackerApp:
     def __init__(self, window, repository):
         self.repository = repository
+        self.editing_id = None
         window.title("Expense Tracker")
         window.geometry("760x420")
 
@@ -36,9 +37,17 @@ class ExpenseTrackerApp:
         self.category = ttk.Entry(form, width=20)
         self.category.grid(row=1, column=2, padx=4)
 
-        ttk.Button(form, text="Save", command=self.save_transaction).grid(
-            row=1, column=3, padx=4
+        self.save_button = ttk.Button(form, text="Save", command=self.save_transaction)
+        self.save_button.grid(row=1, column=3, padx=4)
+
+        ttk.Button(form, text="Edit Selected", command=self.edit_selected).grid(
+            row=2, column=3, padx=4, pady=4
         )
+
+        ttk.Button(form, text="Cancel Edit", command=self.clear_form).grid(
+            row=2, column=4, padx=4, pady=4
+        )
+
         ttk.Button(form, text="Delete Selected", command=self.delete_selected).grid(
             row=1, column=4, padx=4
         )
@@ -131,14 +140,24 @@ class ExpenseTrackerApp:
             messagebox.showerror("Invalid transaction", "Enter a positive amount and a category.")
             return
 
-        transaction = Transaction(
-            self.kind.get().lower(), cents, category, date.today().isoformat()
-        )
-        self.repository.add_transaction(transaction)
+        kind = self.kind.get().lower()
+
+        if self.editing_id is None:
+            transaction = Transaction(kind, cents, category, date.today().isoformat())
+            self.repository.add_transaction(transaction)
+        else:
+            updated = self.repository.update_transaction(
+                self.editing_id, kind, cents, category
+            )
+            if not updated:
+                messagebox.showinfo(
+                    "Transaction Missing", "This transaction no longer exists."
+                )
+
         self.refresh_table()
         self.refresh_summary()
-        self.amount.delete(0, tk.END)
-        self.category.delete(0, tk.END)
+        self.clear_form()
+
 
     def delete_selected(self):
         selection = self.table.selection()
@@ -158,6 +177,28 @@ class ExpenseTrackerApp:
 
         if not deleted:
             messagebox.showinfo("Transaction Missing", "This transaction no longer exists.")
+
+    def edit_selected(self):
+        selection = self.table.selection()
+        if not selection:
+            messagebox.showinfo("Select a Transaction", "Select a row first.")
+            return
+
+        entry_id, _, kind, category, amount = self.table.item(selection[0], "values")
+        self.editing_id = int(entry_id)
+        self.kind.set(kind)
+        self.amount.delete(0, tk.END)
+        self.amount.insert(0, amount.removeprefix("€"))
+        self.category.delete(0, tk.END)
+        self.category.insert(0, category)
+        self.save_button.configure(text="Update")
+
+    def clear_form(self):
+        self.editing_id = None
+        self.amount.delete(0, tk.END)
+        self.category.delete(0, tk.END)
+        self.save_button.configure(text="Save")
+
 
 
 
