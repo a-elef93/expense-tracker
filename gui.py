@@ -39,6 +39,9 @@ class ExpenseTrackerApp:
         ttk.Button(form, text="Save", command=self.save_transaction).grid(
             row=1, column=3, padx=4
         )
+        ttk.Button(form, text="Delete Selected", command=self.delete_selected).grid(
+            row=1, column=4, padx=4
+        )
 
         summary = ttk.Frame(window, padding=(12, 0))
         summary.pack(fill="x")
@@ -56,7 +59,12 @@ class ExpenseTrackerApp:
         self.summary_label.pack(fill="x")
         self.refresh_summary()
         columns = ("ID", "Date", "Type", "Category", "Amount")
-        self.table = ttk.Treeview(window, columns=columns, show="headings")
+        self.table = ttk.Treeview(
+            window,
+            columns=columns,
+            show="headings",
+            selectmode="browse",
+        )
 
         for column, width in zip(columns, (55, 120, 100, 240, 110)):
             self.table.heading(column, text=column)
@@ -73,6 +81,7 @@ class ExpenseTrackerApp:
             self.table.insert(
                 "",
                 "end",
+                iid=str(entry_id),
                 values=(
                     entry_id,
                     entry_date,
@@ -130,6 +139,26 @@ class ExpenseTrackerApp:
         self.refresh_summary()
         self.amount.delete(0, tk.END)
         self.category.delete(0, tk.END)
+
+    def delete_selected(self):
+        selection = self.table.selection()
+        if not selection:
+            messagebox.showinfo("Select a Transaction", "Select a row first.")
+            return
+
+        entry_id = int(selection[0])
+        if not messagebox.askyesno(
+            "Delete Transaction", f"Delete transaction #{entry_id}?"
+        ):
+            return
+
+        deleted = self.repository.delete_transaction(entry_id)
+        self.refresh_table()
+        self.refresh_summary()
+
+        if not deleted:
+            messagebox.showinfo("Transaction Missing", "This transaction no longer exists.")
+
 
 
 def main():

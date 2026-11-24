@@ -23,6 +23,18 @@ class TransactionRepository:
         finally:
             connection.close()
 
+    def delete_transaction(self, entry_id):
+        connection = self.database.connect()
+        try:
+            cursor = connection.execute(
+                "DELETE FROM transactions WHERE id = ?", (entry_id,)
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+        finally:
+            connection.close()
+
+
     def list_transactions(self):
         connection = self.database.connect()
 
