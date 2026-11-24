@@ -2,6 +2,8 @@
 
 A desktop app built with Python, Tkinter, and SQLite for tracking income and expenses.
 
+![Expense Tracker showing monthly totals and sample transactions](docs/expense-tracker.png)
+
 ## Features
 
 - Add, edit, and delete transactions from the desktop interface.
