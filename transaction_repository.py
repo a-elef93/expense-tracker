@@ -67,3 +67,19 @@ class TransactionRepository:
             totals[kind] += amount_cents
 
         return totals
+
+    def update_transaction(self, entry_id, kind, cents, category):
+        connection = self.database.connect()
+        try:
+            cursor = connection.execute(
+                """
+                UPDATE transactions
+                SET kind = ?, amount_cents = ?, category = ?
+                WHERE id = ?
+                """,
+                (kind, cents, category, entry_id),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+        finally:
+            connection.close()
