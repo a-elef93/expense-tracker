@@ -17,7 +17,16 @@ class ExpenseTrackerApp:
         self.repository = repository
         self.editing_id = None
         window.title("Expense Tracker")
-        window.geometry("760x420")
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+
+        width = min(960, screen_width)
+        height = min(540, screen_height)
+
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+
+        window.geometry(f"{width}x{height}+{x}+{y}")
 
         form = ttk.Frame(window, padding=12)
         form.pack(fill="x")
@@ -55,9 +64,9 @@ class ExpenseTrackerApp:
         summary = ttk.Frame(window, padding=(12, 0))
         summary.pack(fill="x")
 
-        ttk.Label(summary, text="Month (YYYY-MM)").pack(side="left")
+        ttk.Label(summary, text="Month (MM-YYYY)").pack(side="left")
         self.month = ttk.Entry(summary, width=9)
-        self.month.insert(0, date.today().isoformat()[:7])
+        self.month.insert(0, date.today().strftime("%m-%Y"))
         self.month.pack(side="left", padx=6)
 
         ttk.Button(summary, text="Show Summary", command=self.refresh_summary).pack(
@@ -100,17 +109,17 @@ class ExpenseTrackerApp:
                 ),
             )
     def refresh_summary(self):
-        month = self.month.get().strip()
+        month_text = self.month.get().strip()
 
         try:
-            first_day = date.fromisoformat(f"{month}-01")
-            if first_day.isoformat()[:7] != month:
-                raise ValueError
+            month, year = month_text.split("-")
+            first_day = date.fromisoformat(f"{year}-{month}-01")
         except ValueError:
-            self.summary_label.config(text="Enter a valid month, e.g. 2026-11.")
+            self.summary_label.config(text="Enter a valid month, e.g. 11-2026.")
             return
 
-        totals = self.repository.monthly_totals(month)
+        totals = self.repository.monthly_totals(first_day.isoformat()[:7])
+
         income = totals["income"]
         expenses = totals["expense"]
 
