@@ -40,6 +40,21 @@ class ExpenseTrackerApp:
             row=1, column=3, padx=4
         )
 
+        summary = ttk.Frame(window, padding=(12, 0))
+        summary.pack(fill="x")
+
+        ttk.Label(summary, text="Month (YYYY-MM)").pack(side="left")
+        self.month = ttk.Entry(summary, width=9)
+        self.month.insert(0, date.today().isoformat()[:7])
+        self.month.pack(side="left", padx=6)
+
+        ttk.Button(summary, text="Show Summary", command=self.refresh_summary).pack(
+            side="left"
+        )
+
+        self.summary_label = ttk.Label(window, padding=(12, 8))
+        self.summary_label.pack(fill="x")
+        self.refresh_summary()
         columns = ("ID", "Date", "Type", "Category", "Amount")
         self.table = ttk.Treeview(window, columns=columns, show="headings")
 
@@ -66,6 +81,29 @@ class ExpenseTrackerApp:
                     format_euros(cents),
                 ),
             )
+    def refresh_summary(self):
+        month = self.month.get().strip()
+
+        try:
+            first_day = date.fromisoformat(f"{month}-01")
+            if first_day.isoformat()[:7] != month:
+                raise ValueError
+        except ValueError:
+            self.summary_label.config(text="Enter a valid month, e.g. 2026-11.")
+            return
+
+        totals = self.repository.monthly_totals(month)
+        income = totals["income"]
+        expenses = totals["expense"]
+
+        self.summary_label.config(
+            text=(
+                f"Income: {format_euros(income)}    "
+                f"Expenses: {format_euros(expenses)}    "
+                f"Balance: {format_euros(income - expenses)}"
+            )
+        )
+
 
     def save_transaction(self):
         amount_text = self.amount.get().strip().replace(",", ".")
@@ -89,6 +127,7 @@ class ExpenseTrackerApp:
         )
         self.repository.add_transaction(transaction)
         self.refresh_table()
+        self.refresh_summary()
         self.amount.delete(0, tk.END)
         self.category.delete(0, tk.END)
 
