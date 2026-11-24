@@ -20,6 +20,7 @@ def main():
 
     print("1. Add transaction")
     print("2. List transactions")
+    print("3. Monthly summary")
     choice = input("Choose an option: ").strip()
 
     if choice == "1":
